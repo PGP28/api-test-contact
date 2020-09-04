@@ -1,3 +1,4 @@
+import json
 from flask import Flask, request, jsonify, render_template
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
@@ -21,8 +22,14 @@ def root():
 
 @app.route("/api/contacts", methods=['GET', 'POST'])
 @app.route("/api/contacts/<int:id>", methods=['GET', 'PUT', 'DELETE'])
-def contacts(id = None):
+@app.route("/api/contacts/name/<name>", methods=['GET'])
+def contacts(id = None, name = None):
     if request.method == 'GET':
+        if name is not None:
+            #contact = Contact.query.filter_by(name="Paul Guzmán").first()
+            #contacts = Contact.query.filter(Contact.name.like("%"+name+"%")).all()
+            #print(contact)
+            return jsonify(contact.serialize()), 200
         if id is not None:
             contact = Contact.query.get(id)
             if contact:
@@ -35,11 +42,53 @@ def contacts(id = None):
             return jsonify(contacts), 200
 
     if request.method == 'POST':
-        pass
+        name = request.json.get("name", None)
+        phone = request.json.get("phone", None)
+
+        if not name:
+            return jsonify({"msg": "Name is required"}), 400
+        if not phone:
+            return jsonify({"msg": "Phone is required"}), 400
+
+        contact = Contact()
+        contact.name = name
+        contact.phone = json.dumps(phone)
+        contact.save()
+
+        return jsonify(contact.serialize()), 201
+
+
     if request.method == 'PUT':
-        pass
+        name = request.json.get("name", None)
+        phone = request.json.get("phone", None)
+
+        if not name:
+            return jsonify({"msg": "Name is required"}), 400
+        if not phone:
+            return jsonify({"msg": "Phone is required"}), 400
+
+        contact = Contact.query.get(id)
+        
+        if not contact:
+            return jsonify({"msg": "Contact not found"}), 404
+        
+        contact.name = name
+        contact.phone = json.dumps(phone)
+        contact.update()
+
+        return jsonify(contact.serialize()), 200
+
+
     if request.method == 'DELETE':
-        pass
+        contact = Contact.query.get(id)
+        
+        if not contact:
+            return jsonify({"msg": "Contact not found"}), 404
+
+        contact.delete()
+
+        return jsonify({"success": "Contact was deleted"}), 200
+
 
 if __name__ == "__main__":
     manager.run()

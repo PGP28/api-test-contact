@@ -1,3 +1,4 @@
+import json
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
@@ -11,7 +12,7 @@ class Contact(db.Model):
         return{
             "id": self.id,
             "name": self.name,
-            "phone": self.phone,
+            "phone": json.loads(self.phone)
         }
 
     def save(self):
